@@ -1,6 +1,6 @@
-# rs-imntervalset
+# rs-intervalset
 
-Python module for operations on mmapped intervals.
+Python module for fast indexing of immutable memory-mapped intervalsets.
 
 ## Install
 
