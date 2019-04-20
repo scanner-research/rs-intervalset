@@ -1,0 +1,13 @@
+[package]
+name = "rs-intervalset"
+version = "0.1.0"
+authors = ["James Hong <james.hong@cs.stanford.edu>"]
+
+[lib]
+name = "rs_intervalset"
+crate-type = ["cdylib"]
+
+[dependencies]
+memmap = "0.7.0"
+byteorder = "1.2.7"
+pyo3 = { version = "0.5.0", features = ["extension-module"] }
