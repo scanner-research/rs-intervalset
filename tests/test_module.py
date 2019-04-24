@@ -3,7 +3,7 @@ import pickle
 import pytest
 import random
 
-from rs_intervalset import MmapIntervalSetMapping
+from rs_intervalset import MmapIntervalSetMapping, IntervalSetMappingWriter
 
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -19,10 +19,8 @@ MAX_T_SPAN = 1000
 
 @pytest.fixture(scope='session', autouse=True)
 def dummy_data():
-    def fmt_u32(v):
-        return v.to_bytes(4, byteorder='little')
 
-    with open(DATA_PATH, 'wb') as data_fh, open(TRUTH_PATH, 'wb') as truth_fh:
+    with IntervalSetMappingWriter(DATA_PATH) as writer:
         ground_truth = {}
         for i in range(N):
             intervals = []
@@ -35,15 +33,10 @@ def dummy_data():
                 intervals.append((a, b))
                 max_sampled = b + 1
             intervals.sort()
-
+            writer.write(i, intervals)
             ground_truth[i] = intervals
-
-            data_fh.write(fmt_u32(i))
-            data_fh.write(fmt_u32(len(intervals)))
-            for a, b in intervals:
-                data_fh.write(fmt_u32(a))
-                data_fh.write(fmt_u32(b))
-        pickle.dump(ground_truth, truth_fh)
+        with open(TRUTH_PATH, 'wb') as truth_fh:
+            pickle.dump(ground_truth, truth_fh)
     yield
     os.remove(DATA_PATH)
     os.remove(TRUTH_PATH)
