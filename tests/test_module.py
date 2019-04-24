@@ -73,7 +73,7 @@ def test_contains():
         return False
 
     for v in range(MAX_T):
-        assert truth_contains(v) == isetmap.is_contained(i, v), \
+        assert truth_contains(v) == isetmap.is_contained(i, v, False), \
             'diff: {} -- {}'.format(v, isetmap.get_intervals(i))
 
 
@@ -82,4 +82,4 @@ def test_intersect():
     isetmap = MmapIntervalSetMapping(DATA_PATH)
 
     i = random.choice(list(truth.keys()))
-    assert truth[i] == isetmap.intersect(i, 0, MAX_T)
+    assert truth[i] == isetmap.intersect(i, 0, MAX_T, False)

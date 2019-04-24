@@ -133,17 +133,21 @@ impl MmapIntervalSetMapping {
     }
 
     // Get whether a target is in any of the intervals in the set
-    fn is_contained(&self, id: Id, target: Value) -> PyResult<bool> {
+    fn is_contained(&self, id: Id, target: Value, no_error: bool) -> PyResult<bool> {
         match self._impl.offsets.get(&id) {
             Some((base_offset, length)) => {
                 Ok(self._impl.binary_search(*base_offset, *length, target, false).is_some())
             },
-            None => Err(exceptions::IndexError::py_err("id not found")),
+            None => if no_error {
+                Ok(false)
+            } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            }
         }
     }
 
     // Intersect a single interval
-    fn intersect(&self, id: Id, start: Value, end: Value) -> PyResult<Vec<Interval>> {
+    fn intersect(&self, id: Id, start: Value, end: Value, no_error: bool) -> PyResult<Vec<Interval>> {
         match self._impl.offsets.get(&id) {
             Some((base_offset, length)) =>
                 match self._impl.binary_search(*base_offset, *length, start, true) {
@@ -164,7 +168,11 @@ impl MmapIntervalSetMapping {
                     },
                     None => Ok(vec![])
                 },
-            None => Err(exceptions::IndexError::py_err("id not found")),
+            None => if no_error {
+                Ok(vec![])
+            } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            }
         }
     }
 
