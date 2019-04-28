@@ -29,7 +29,7 @@ def dummy_data():
                 a = random.randint(max_sampled, max_sampled + MAX_SKIP)
                 if a >= MAX_T:
                     break
-                b = min(MAX_T, a + random.randint(0, MAX_T_SPAN))
+                b = min(MAX_T, a + random.randint(1, MAX_T_SPAN))
                 intervals.append((a, b))
                 max_sampled = b + 1
             intervals.sort()
@@ -82,4 +82,5 @@ def test_intersect():
     isetmap = MmapIntervalSetMapping(DATA_PATH)
 
     i = random.choice(list(truth.keys()))
+    assert isetmap.has_intersection(i, 0, MAX_T, False)
     assert truth[i] == isetmap.intersect(i, 0, MAX_T, False)

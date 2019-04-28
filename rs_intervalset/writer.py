@@ -1,7 +1,9 @@
+from typing import List, Tuple
+
 
 class IntervalSetMappingWriter(object):
 
-    def __init__(self, path):
+    def __init__(self, path: str):
         self._fp = open(path, 'wb')
         self._path = path
 
@@ -14,10 +16,11 @@ class IntervalSetMappingWriter(object):
     def __fmt_u32(self, v):
         return v.to_bytes(4, byteorder='little')
 
-    def write(self, id_, intervals):
+    def write(self, id_: int, intervals: List[Tuple[int, int]]):
         self._fp.write(self.__fmt_u32(id_))
         self._fp.write(self.__fmt_u32(len(intervals)))
         for a, b in intervals:
+            assert b > a, 'invalid interval: ({}, {})'.format(a, b)
             self._fp.write(self.__fmt_u32(a))
             self._fp.write(self.__fmt_u32(b))
 

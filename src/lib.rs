@@ -146,10 +146,42 @@ impl MmapIntervalSetMapping {
         }
     }
 
+    // Get whether start and end intersect with any interval in the set
+    fn has_intersection(&self, id: Id, start: Value, end: Value, no_error: bool) -> PyResult<bool> {
+        match self._impl.offsets.get(&id) {
+            Some((base_offset, length)) => Ok(
+                match self._impl.binary_search(*base_offset, *length, start, true) {
+                    Some(min_idx) => {
+                        let mut isects = false;
+                        let mut i = min_idx;
+                        while i < *length {
+                            let curr_int = self._impl.read_interval(*base_offset + i * INTERVAL_SIZE);
+                            if min(end, curr_int.1) - max(start, curr_int.0) > 0 {
+                                isects = true;
+                                break;
+                            }
+                            if curr_int.0 > end {
+                                break;
+                            }
+                            i += 1;
+                        }
+                        isects
+                    },
+                    None => false
+                }
+            ),
+            None => if no_error {
+                Ok(false)
+            } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            }
+        }
+    }
+
     // Intersect a single interval
     fn intersect(&self, id: Id, start: Value, end: Value, no_error: bool) -> PyResult<Vec<Interval>> {
         match self._impl.offsets.get(&id) {
-            Some((base_offset, length)) =>
+            Some((base_offset, length)) => Ok(
                 match self._impl.binary_search(*base_offset, *length, start, true) {
                     Some(min_idx) => {
                         let mut ret = vec![];
@@ -164,10 +196,11 @@ impl MmapIntervalSetMapping {
                             }
                             i += 1;
                         }
-                        Ok(ret)
+                        ret
                     },
-                    None => Ok(vec![])
-                },
+                    None => vec![]
+                }
+            ),
             None => if no_error {
                 Ok(vec![])
             } else {
