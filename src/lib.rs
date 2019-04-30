@@ -75,6 +75,12 @@ impl _MmapIntervalSetMapping {
         }
     }
 
+    fn read_intervals(&self, base_offset: usize, length: usize) -> Vec<Interval> {
+        (0..length).map(
+            |i| self.read_interval(base_offset + i * INTERVAL_SIZE)
+        ).collect()
+    }
+
 }
 
 #[pyclass]
@@ -123,11 +129,7 @@ impl MmapIntervalSetMapping {
     // Get all intervals for an id
     fn get_intervals(&self, id: Id) -> PyResult<Vec<Interval>> {
         match self._impl.offsets.get(&id) {
-            Some((base_offset, length)) => Ok(
-                (0..*length).map(
-                    |i| self._impl.read_interval(*base_offset + i * INTERVAL_SIZE)
-                ).collect()
-            ),
+            Some((base_offset, length)) => Ok(self._impl.read_intervals(*base_offset, *length)),
             None => Err(exceptions::IndexError::py_err("id not found")),
         }
     }
@@ -147,7 +149,7 @@ impl MmapIntervalSetMapping {
     }
 
     // Get whether start and end intersect with any interval in the set
-    fn has_intersection(&self, id: Id, start: Value, end: Value, no_error: bool) -> PyResult<bool> {
+    fn has_intersection_one(&self, id: Id, start: Value, end: Value, no_error: bool) -> PyResult<bool> {
         match self._impl.offsets.get(&id) {
             Some((base_offset, length)) => Ok(
                 match self._impl.binary_search(*base_offset, *length, start, true) {
@@ -179,7 +181,7 @@ impl MmapIntervalSetMapping {
     }
 
     // Intersect a single interval
-    fn intersect(&self, id: Id, start: Value, end: Value, no_error: bool) -> PyResult<Vec<Interval>> {
+    fn intersect_one(&self, id: Id, start: Value, end: Value, no_error: bool) -> PyResult<Vec<Interval>> {
         match self._impl.offsets.get(&id) {
             Some((base_offset, length)) => Ok(
                 match self._impl.binary_search(*base_offset, *length, start, true) {
@@ -201,6 +203,38 @@ impl MmapIntervalSetMapping {
                     None => vec![]
                 }
             ),
+            None => if no_error {
+                Ok(vec![])
+            } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            }
+        }
+    }
+
+    // Intersect a sorted list of intervals
+    fn intersect(&self, id: Id, intervals: Vec<Interval>, no_error: bool) -> PyResult<Vec<Interval>> {
+        match self._impl.offsets.get(&id) {
+            Some((base_offset, length)) => {
+                let mut res = Vec::new();
+                let self_intervals = self._impl.read_intervals(*base_offset, *length);
+                let mut i = 0;
+                let mut j = 0;
+                while i < intervals.len() && j < self_intervals.len() {
+                    let a = intervals[i];
+                    let b = self_intervals[j];
+                    let end = min(a.1, b.1);
+                    let start = max(a.0, b.0);
+                    if end - start > 0 {
+                        res.push((start, end));
+                    }
+                    if intervals[i].1 <= self_intervals[j].1 {
+                        i += 1;
+                    } else {
+                        j += 1;
+                    }
+                }
+                Ok(res)
+            },
             None => if no_error {
                 Ok(vec![])
             } else {

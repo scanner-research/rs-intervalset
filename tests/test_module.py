@@ -15,6 +15,7 @@ N = 1000
 MAX_SKIP = 1000
 MAX_T = 100000
 MAX_T_SPAN = 1000
+N_REPEAT = 10
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -77,10 +78,19 @@ def test_contains():
             'diff: {} -- {}'.format(v, isetmap.get_intervals(i))
 
 
-def test_intersect():
+def test_intersect_one():
     truth = _load_truth()
     isetmap = MmapIntervalSetMapping(DATA_PATH)
 
-    i = random.choice(list(truth.keys()))
-    assert isetmap.has_intersection(i, 0, MAX_T, False)
-    assert truth[i] == isetmap.intersect(i, 0, MAX_T, False)
+    for _ in range(N_REPEAT):
+        i = random.choice(list(truth.keys()))
+        assert isetmap.has_intersection_one(i, 0, MAX_T, False)
+        assert truth[i] == isetmap.intersect_one(i, 0, MAX_T, False)
+
+
+def test_intersect_many():
+    truth = _load_truth()
+    isetmap = MmapIntervalSetMapping(DATA_PATH)
+    for _ in range(N_REPEAT):
+        i = random.choice(list(truth.keys()))
+        assert truth[i] == isetmap.intersect(i, [(0, MAX_T)], False)
