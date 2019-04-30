@@ -247,6 +247,75 @@ impl MmapIntervalSetMapping {
         }
     }
 
+    // Minus this from intervals
+    fn minus(&self, id: Id, intervals: Vec<Interval>, no_error: bool) -> PyResult<Vec<Interval>> {
+        match self._impl.offsets.get(&id) {
+            Some((base_offset, length)) => {
+                let mut res = Vec::new();
+                let self_intervals = self._impl.read_intervals(*base_offset, *length);
+                let mut i = 0;
+                let mut j = 0;
+                let mut mod_a: Option<(Value, Value)> = None;
+                while i < intervals.len() && j < self_intervals.len() {
+                    if mod_a.is_none() {
+                        mod_a = Some(intervals[i])
+                    }
+                    let a = mod_a.unwrap();
+                    let b = self_intervals[j];
+                    if a.0 < b.0 {
+                        if a.1 <= b.0 {
+                            // a before b
+                            res.push(a);
+                            mod_a = None;
+                            i += 1;
+                        } else {
+                            // a's tail overlaps
+                            res.push((a.0, b.0));
+                            if a.1 <= b.1 {
+                                // rest of a in b
+                                mod_a = None;
+                                i += 1;
+                            } else {
+                                // some of a is left
+                                mod_a = Some((b.1, a.1));
+                                j += 1;
+                            }
+                        }
+                    } else {
+                        if a.0 >= b.1 {
+                            // b before a
+                            j += 1;
+                        } else {
+                            if a.1 <= b.1 {
+                                // a in b
+                                mod_a = None;
+                                i += 1;
+                            } else {
+                                // some of a is left
+                                mod_a = Some((b.1, a.1));
+                                j += 1;
+                            }
+                        }
+                    }
+                }
+                if mod_a.is_some() {
+                    res.push(mod_a.unwrap());
+                    i += 1;
+                }
+                while i < intervals.len() {
+                    res.push(intervals[i]);
+                    i += 1;
+                }
+                Ok(res)
+            },
+            None => if no_error {
+                Ok(intervals)
+            } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            }
+        }
+    }
+
     #[new]
     unsafe fn __new__(obj: &PyRawObject, data_file: String) -> PyResult<()> {
         match File::open(&data_file) {

@@ -88,9 +88,30 @@ def test_intersect_one():
         assert truth[i] == isetmap.intersect_one(i, 0, MAX_T, False)
 
 
-def test_intersect_many():
+def test_intersect():
     truth = _load_truth()
     isetmap = MmapIntervalSetMapping(DATA_PATH)
     for _ in range(N_REPEAT):
         i = random.choice(list(truth.keys()))
         assert truth[i] == isetmap.intersect(i, [(0, MAX_T)], False)
+
+
+def test_minus():
+    truth = _load_truth()
+    isetmap = MmapIntervalSetMapping(DATA_PATH)
+
+    def naive_minus(intervals, min_val, max_val):
+        result = []
+        i = min_val
+        for a, b in intervals:
+            if a - i > 0:
+                result.append((i, a))
+            i = b
+        if i < max_val:
+            result.append((i, max_val))
+        return result
+
+    for _ in range(N_REPEAT):
+        i = random.choice(list(truth.keys()))
+        assert naive_minus(truth[i], 0, MAX_T) == \
+            isetmap.minus(i, [(0, MAX_T)], False)
