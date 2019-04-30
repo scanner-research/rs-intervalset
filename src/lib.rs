@@ -127,10 +127,14 @@ impl MmapIntervalSetMapping {
     }
 
     // Get all intervals for an id
-    fn get_intervals(&self, id: Id) -> PyResult<Vec<Interval>> {
+    fn get_intervals(&self, id: Id, no_error: bool) -> PyResult<Vec<Interval>> {
         match self._impl.offsets.get(&id) {
             Some((base_offset, length)) => Ok(self._impl.read_intervals(*base_offset, *length)),
-            None => Err(exceptions::IndexError::py_err("id not found")),
+            None => if no_error {
+                Ok(vec![])
+            } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            }
         }
     }
 

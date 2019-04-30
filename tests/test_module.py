@@ -56,7 +56,7 @@ def test_integrity():
     for i in truth:
         assert isetmap.has_id(i)
         assert len(truth[i]) == isetmap.get_interval_count(i)
-        assert len(truth[i]) == len(isetmap.get_intervals(i))
+        assert len(truth[i]) == len(isetmap.get_intervals(i, False))
         for j, interval in enumerate(truth[i]):
             assert interval == isetmap.get_interval(i, j)
 
@@ -75,7 +75,7 @@ def test_contains():
 
     for v in range(MAX_T):
         assert truth_contains(v) == isetmap.is_contained(i, v, False), \
-            'diff: {} -- {}'.format(v, isetmap.get_intervals(i))
+            'diff: {} -- {}'.format(v, isetmap.get_intervals(i, False))
 
 
 def test_intersect_one():
