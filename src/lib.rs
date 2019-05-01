@@ -194,7 +194,7 @@ impl MmapIntervalSetMapping {
                         let mut i = min_idx;
                         while i < *length {
                             let curr_int = self._impl.read_interval(*base_offset + i * INTERVAL_SIZE);
-                            if min(end, curr_int.1) - max(start, curr_int.0) > 0 {
+                            if min(end, curr_int.1) > max(start, curr_int.0) {
                                 ret.push(curr_int);
                             }
                             if curr_int.0 > end {
@@ -228,7 +228,7 @@ impl MmapIntervalSetMapping {
                     let b = self_intervals[j];
                     let end = min(a.1, b.1);
                     let start = max(a.0, b.0);
-                    if end - start > 0 {
+                    if end > start {
                         res.push((start, end));
                     }
                     if intervals[i].1 <= self_intervals[j].1 {
