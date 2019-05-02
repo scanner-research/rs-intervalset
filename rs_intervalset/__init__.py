@@ -1,4 +1,3 @@
-from .rs_intervalset import MmapIntervalSetMapping
-from .writer import IntervalSetMappingWriter
+from .rs_intervalset import MmapIntervalSetMapping, MmapIntervalListMapping
 
-__all__ = ['MmapIntervalSetMapping', 'IntervalSetMappingWriter']
+__all__ = ['MmapIntervalSetMapping', 'MmapIntervalListMapping']

@@ -3,12 +3,13 @@ import pickle
 import pytest
 import random
 
-from rs_intervalset import MmapIntervalSetMapping, IntervalSetMappingWriter
+from rs_intervalset import MmapIntervalSetMapping
+from rs_intervalset.writer import IntervalSetMappingWriter
 
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
-DATA_PATH = os.path.join(CURRENT_DIR, '.test_data.bin')
-TRUTH_PATH = os.path.join(CURRENT_DIR, '.test_truth.bin')
+DATA_PATH = os.path.join(CURRENT_DIR, '.isetmap.test_data.bin')
+TRUTH_PATH = os.path.join(CURRENT_DIR, '.isetmap.test_truth.bin')
 
 
 N = 1000

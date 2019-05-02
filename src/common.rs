@@ -18,8 +18,12 @@ pub fn mmap_read_u32(m: &Mmap, i: usize) -> u32 {
 }
 
 pub fn mmap_read_payload(m: &Mmap, i: usize, n: usize) -> Payload {
-    let mut rdr = Cursor::new(&m[i..i + n]);
-    rdr.read_u64::<LittleEndian>().unwrap()
+    let mut res: Payload = 0;
+    let bytes: &[u8] = &m[i..i+n];
+    for j in 0..n {
+        res |= (bytes[j] << (8 * j)) as u64;
+    }
+    res
 }
 
 pub fn parse_offsets(m: &Mmap, payload_len: usize) -> Option<HashMap<Id, (usize, usize)>> {
