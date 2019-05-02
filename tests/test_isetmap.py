@@ -78,14 +78,13 @@ def test_contains():
             'diff: {} -- {}'.format(v, isetmap.get_intervals(i, False))
 
 
-def test_intersect_one():
+def test_has_intersection():
     truth = _load_truth()
     isetmap = MmapIntervalSetMapping(DATA_PATH)
 
     for _ in range(N_REPEAT):
         i = random.choice(list(truth.keys()))
-        assert isetmap.has_intersection_one(i, 0, MAX_T, False)
-        assert truth[i] == isetmap.intersect_one(i, 0, MAX_T, False)
+        assert isetmap.has_intersection(i, 0, MAX_T, False)
 
 
 def test_intersect():
