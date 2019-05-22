@@ -11,7 +11,7 @@ DATA_PATH = os.path.join(CURRENT_DIR, '.ilistmap.test_data.bin')
 TRUTH_PATH = os.path.join(CURRENT_DIR, '.ilistmap.test_truth.bin')
 
 PAYLOAD_LEN = 1
-DISCTINT_PAYLOADS = 20
+DISTINCT_PAYLOADS = 20
 N = 1000
 M = 1000
 MAX_T = 100000
@@ -29,7 +29,7 @@ def dummy_data():
             for j in range(M):
                 a = random.randint(0, MAX_T - 1)
                 b = min(MAX_T, a + random.randint(1, MAX_SPAN))
-                c = random.randint(0, DISCTINT_PAYLOADS - 1)
+                c = random.randint(0, DISTINCT_PAYLOADS - 1)
                 intervals.append((a, b, c))
             intervals.sort()
             writer.write(i, intervals)
@@ -70,9 +70,28 @@ def test_integrity():
     assert set(truth.keys()) == set(isetmap.get_ids())
     for i in truth:
         assert isetmap.has_id(i)
-        for j in range(DISCTINT_PAYLOADS):
+        for j in range(DISTINCT_PAYLOADS):
             assert (len(_filter(truth[i], 0xFF, j))
                     == isetmap.get_interval_count(i, 0xFF, j))
+
+
+def test_contains():
+    truth = _load_truth()
+    isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
+
+    i = random.choice(list(truth.keys()))
+
+    def truth_contains(v, mask, payload):
+        for (a, b, _) in _filter(truth[i], mask, payload):
+            if v >= a and v < b:
+                return True
+        return False
+
+    for v in range(MAX_T):
+        j = random.randint(0, DISTINCT_PAYLOADS - 1)
+        assert truth_contains(v, 0xFF, j) == \
+            isetmap.is_contained(i, v, 0xFF, j, False, MAX_SPAN), \
+            'Truth: {}'.format(truth[i])
 
 
 def test_sum():
@@ -80,7 +99,7 @@ def test_sum():
     isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
     for _ in range(N_REPEAT):
         i = random.choice(list(truth.keys()))
-        for j in range(DISCTINT_PAYLOADS):
+        for j in range(DISTINCT_PAYLOADS):
             assert (
                 sum(x[1] - x[0] for x in _filter(truth[i], 0xFF, j))
                 == isetmap.intersect_sum(i, [(0, MAX_T)], 0xFF, j, False))
@@ -91,7 +110,7 @@ def test_intersect():
     isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
     for _ in range(N_REPEAT):
         i = random.choice(list(truth.keys()))
-        for j in range(DISCTINT_PAYLOADS):
+        for j in range(DISTINCT_PAYLOADS):
             true_iset = _deoverlap(
                 (x[0], x[1]) for x in _filter(truth[i], 0xFF, j)
             )

@@ -85,6 +85,71 @@ impl MmapIntervalListMapping {
         }
     }
 
+    fn is_contained(
+        &self, id: Id, target: Value, payload_mask: Payload, payload_value: Payload,
+        use_default: bool,
+        search_window: Value    // Window to search to the left since the list is possibly
+                                // overlapping. Set this to max interval len, ideally.
+    ) -> PyResult<bool> {
+        match self._impl.offsets.get(&id) {
+            Some((base_offset, length)) => {
+                let interval_payload_size = INTERVAL_SIZE + self._impl.payload_len;
+
+                // Binary search to the index
+                let mut min_idx = 0;
+                let mut max_idx = *length;
+                while min_idx < max_idx {
+                    let pivot = (min_idx + max_idx) / 2;
+                    let pivot_int_and_p = self._impl.read_interval(
+                        base_offset + pivot * interval_payload_size);
+                    if pivot_int_and_p.0 <= target && pivot_int_and_p.1 > target {
+                        min_idx = pivot;
+                        max_idx = pivot;
+                    } else if pivot_int_and_p.0 > target {
+                        max_idx = pivot;
+                    } else {
+                        min_idx = pivot + 1;
+                    }
+                }
+
+                // Look to the right
+                let mut i = min_idx;
+                while i < *length {
+                    let int_and_p = self._impl.read_interval(
+                        base_offset + i * interval_payload_size);
+                    if int_and_p.0 > target {
+                        break;
+                    }
+                    if int_and_p.0 <= target && int_and_p.1 > target
+                        && (payload_mask & int_and_p.2) == payload_value {
+                        return Ok(true);
+                    }
+                    i += 1;
+                }
+
+                // Look window to the left
+                i = min_idx;
+                while i > 0 {
+                    i -= 1;
+                    let int_and_p = self._impl.read_interval(
+                        base_offset + i * interval_payload_size);
+                    if int_and_p.0 + search_window < target {
+                        break;
+                    }
+                    if int_and_p.0 <= target && int_and_p.1 > target
+                        && (payload_mask & int_and_p.2) == payload_value {
+                        return Ok(true);
+                    }
+                }
+
+                Ok(false)
+            },
+            None => if use_default { Ok(false) } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            },
+        }
+    }
+
     fn intersect(
         &self, id: Id, intervals: Vec<Interval>, payload_mask: Payload, payload_value: Payload,
         use_default: bool
