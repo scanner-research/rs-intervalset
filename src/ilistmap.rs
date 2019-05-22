@@ -85,6 +85,21 @@ impl MmapIntervalListMapping {
         }
     }
 
+    fn get_intervals(
+        &self, id: Id, payload_mask: Payload, payload_value: Payload,
+        use_default: bool
+    ) -> PyResult<Vec<Interval>> {
+        match self._impl.offsets.get(&id) {
+            Some((base_offset, length)) => {
+                Ok(self._impl.read_intervals(
+                    *base_offset, *length, payload_mask, payload_value))
+            },
+            None => if use_default { Ok(vec![]) } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            },
+        }
+    }
+
     fn is_contained(
         &self, id: Id, target: Value, payload_mask: Payload, payload_value: Payload,
         use_default: bool,
