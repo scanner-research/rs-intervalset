@@ -67,6 +67,17 @@ impl MmapIntervalListMapping {
         Ok(self._impl.offsets.contains_key(&id))
     }
 
+    fn sum(&self, payload_mask: Payload, payload_value: Payload) -> PyResult<u64> {
+        Ok(self._impl.offsets.iter().fold(
+            0u64,
+            |total, (_, (base_offset, length))| {
+                total + self._impl.read_intervals(
+                    *base_offset, *length, payload_mask, payload_value
+                ).iter().fold(0u64, |acc, int| acc + (int.1 - int.0) as u64)
+            }
+        ))
+    }
+
     // Get the number of intervals for an id
     fn get_interval_count(
         &self, id: Id, payload_mask: Payload, payload_value: Payload

@@ -62,6 +62,11 @@ def test_integrity():
             assert interval == isetmap.get_interval(i, j)
 
 
+def test_sum():
+    # TODO: add test for summing all intervals
+    pass
+
+
 def test_contains():
     truth = _load_truth()
     isetmap = MmapIntervalSetMapping(DATA_PATH)

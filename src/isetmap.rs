@@ -77,6 +77,16 @@ impl MmapIntervalSetMapping {
         Ok(self._impl.offsets.contains_key(&id))
     }
 
+    fn sum(&self) -> PyResult<u64> {
+        Ok(self._impl.offsets.iter().fold(
+            0u64, |total, (_, (base_offset, length))| {
+                total + self._impl.read_intervals(*base_offset, *length).iter().fold(
+                    0u64, |acc, int| acc + (int.1 - int.0) as u64
+                )
+            }
+        ))
+    }
+
     // Get the number of intervals for an id
     fn get_interval_count(&self, id: Id) -> PyResult<usize> {
         match self._impl.offsets.get(&id) {

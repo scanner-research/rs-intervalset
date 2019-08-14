@@ -95,6 +95,7 @@ def test_contains():
 
 
 def test_sum():
+    # TODO: add test for summing all intervals
     truth = _load_truth()
     isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
     for _ in range(N_REPEAT):
