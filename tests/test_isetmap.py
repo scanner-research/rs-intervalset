@@ -62,9 +62,19 @@ def test_integrity():
             assert interval == isetmap.get_interval(i, j)
 
 
+def _is_close(a: float, b: float, t: float = 1e-6) -> bool:
+    return abs(a - b) <= t
+
+
 def test_sum():
-    # TODO: add test for summing all intervals
-    pass
+    truth = _load_truth()
+    isetmap = MmapIntervalSetMapping(DATA_PATH)
+    true_sum = sum(
+        sum(b - a for a, b in intervals)
+        for intervals in truth.values())
+    calc_sum = isetmap.sum()
+    assert _is_close(true_sum, calc_sum), \
+        'diff: {} -- {}'.format(true_sum, calc_sum)
 
 
 def test_contains():

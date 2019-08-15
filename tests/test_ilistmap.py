@@ -94,8 +94,22 @@ def test_contains():
             'Truth: {}'.format(truth[i])
 
 
+def _is_close(a: float, b: float, t: float = 1e-6) -> bool:
+    return abs(a - b) <= t
+
+
 def test_sum():
-    # TODO: add test for summing all intervals
+    truth = _load_truth()
+    isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
+    true_sum = sum(
+        sum(b - a for a, b, _ in intervals)
+        for intervals in truth.values())
+    calc_sum = isetmap.sum(0, 0)
+    assert _is_close(true_sum, calc_sum), \
+        'diff: {} -- {}'.format(true_sum, calc_sum)
+
+
+def test_intersect_sum():
     truth = _load_truth()
     isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
     for _ in range(N_REPEAT):
