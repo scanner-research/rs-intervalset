@@ -48,3 +48,43 @@ class MmapIListToISetMapping(object):
                 i, intervals, self._payload_mask, self._payload_value,
                 use_default),
             self._fuzz)
+
+
+class MmapUnionIlistsToISetMapping(object):
+
+    def __init__(self, ilistmaps: List[MmapIntervalListMapping],
+                 payload_mask: int, payload_value: int, search_window: int,
+                 fuzz: int = 0):
+        self._ilistmaps = ilistmaps
+        self._payload_mask = payload_mask
+        self._payload_value = payload_value
+        self._search_window = search_window
+        self._fuzz = fuzz
+
+    def get_intervals(self, i: int, use_default: bool) -> List[Interval]:
+        result: List[Interval] = []
+        for ilistmap in self._ilistmaps:
+            result.extend(ilistmap.get_intervals(
+                i, self._payload_mask, self._payload_value, use_default))
+        result.sort()
+        return _deoverlap(result, self._fuzz)
+
+    def is_contained(self, i: int, target: int, use_default: bool) -> bool:
+        for ilistmap in self._ilistmaps:
+            if ilistmap.is_contained(
+                i, target, self._payload_mask, self._payload_value,
+                use_default, self._search_window
+            ):
+                return True
+        return False
+
+    def intersect(self, i: int, intervals: List[Interval],
+                  use_default: bool) -> List[Interval]:
+        result: List[Interval] = []
+        for ilistmap in self._ilistmaps:
+            if ilistmap.has_id(i):
+                result.extend(ilistmap.intersect(
+                    i, intervals, self._payload_mask, self._payload_value,
+                    use_default))
+        result.sort()
+        return _deoverlap(result, self._fuzz)
