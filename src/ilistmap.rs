@@ -45,6 +45,17 @@ impl _MmapIntervalListMapping {
         }
         ret
     }
+
+    fn read_intervals_with_payload(
+        &self, base_offset: usize, length: usize
+    ) -> Vec<IntervalAndPayload> {
+        let mut ret = Vec::new();
+        let interval_payload_size = INTERVAL_SIZE + self.payload_len;
+        for i in 0..length {
+            ret.push(self.read_interval(base_offset + i * interval_payload_size));
+        }
+        ret
+    }
 }
 
 #[pyclass]
@@ -104,6 +115,19 @@ impl MmapIntervalListMapping {
             Some((base_offset, length)) => {
                 Ok(self._impl.read_intervals(
                     *base_offset, *length, payload_mask, payload_value))
+            },
+            None => if use_default { Ok(vec![]) } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            },
+        }
+    }
+
+    fn get_intervals_with_payload(
+        &self, id: Id, use_default: bool
+    ) -> PyResult<Vec<IntervalAndPayload>> {
+        match self._impl.offsets.get(&id) {
+            Some((base_offset, length)) => {
+                Ok(self._impl.read_intervals_with_payload(*base_offset, *length))
             },
             None => if use_default { Ok(vec![]) } else {
                 Err(exceptions::IndexError::py_err("id not found"))

@@ -65,19 +65,25 @@ def _deoverlap(l):
 
 def test_integrity():
     truth = _load_truth()
-    isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
-    assert len(truth) == isetmap.len()
-    assert set(truth.keys()) == set(isetmap.get_ids())
+    ilistmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
+    assert len(truth) == ilistmap.len()
+    assert set(truth.keys()) == set(ilistmap.get_ids())
     for i in truth:
-        assert isetmap.has_id(i)
+        assert ilistmap.has_id(i)
+
         for j in range(DISTINCT_PAYLOADS):
-            assert (len(_filter(truth[i], 0xFF, j))
-                    == isetmap.get_interval_count(i, 0xFF, j))
+            true_count = len(_filter(truth[i], 0xFF, j))
+            assert true_count == ilistmap.get_interval_count(i, 0xFF, j)
+            assert true_count == len(ilistmap.get_intervals(i, 0xFF, j, True))
+
+        assert len(truth[i]) == ilistmap.get_interval_count(i, 0, 0)
+        assert (len(truth[i])
+                == len(ilistmap.get_intervals_with_payload(i, True)))
 
 
 def test_contains():
     truth = _load_truth()
-    isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
+    ilistmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
 
     i = random.choice(list(truth.keys()))
 
@@ -90,7 +96,7 @@ def test_contains():
     for v in range(MAX_T):
         j = random.randint(0, DISTINCT_PAYLOADS - 1)
         assert truth_contains(v, 0xFF, j) == \
-            isetmap.is_contained(i, v, 0xFF, j, False, MAX_SPAN), \
+            ilistmap.is_contained(i, v, 0xFF, j, False, MAX_SPAN), \
             'Truth: {}'.format(truth[i])
 
 
@@ -100,29 +106,29 @@ def _is_close(a: float, b: float, t: float = 1e-6) -> bool:
 
 def test_sum():
     truth = _load_truth()
-    isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
+    ilistmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
     true_sum = sum(
         sum(b - a for a, b, _ in intervals)
         for intervals in truth.values())
-    calc_sum = isetmap.sum(0, 0)
+    calc_sum = ilistmap.sum(0, 0)
     assert _is_close(true_sum, calc_sum), \
         'diff: {} -- {}'.format(true_sum, calc_sum)
 
 
 def test_intersect_sum():
     truth = _load_truth()
-    isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
+    ilistmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
     for _ in range(N_REPEAT):
         i = random.choice(list(truth.keys()))
         for j in range(DISTINCT_PAYLOADS):
             assert (
                 sum(x[1] - x[0] for x in _filter(truth[i], 0xFF, j))
-                == isetmap.intersect_sum(i, [(0, MAX_T)], 0xFF, j, False))
+                == ilistmap.intersect_sum(i, [(0, MAX_T)], 0xFF, j, False))
 
 
 def test_intersect():
     truth = _load_truth()
-    isetmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
+    ilistmap = MmapIntervalListMapping(DATA_PATH, PAYLOAD_LEN)
     for _ in range(N_REPEAT):
         i = random.choice(list(truth.keys()))
         for j in range(DISTINCT_PAYLOADS):
@@ -131,4 +137,4 @@ def test_intersect():
             )
             assert (
                 true_iset
-                == isetmap.intersect(i, [(0, MAX_T)], 0xFF, j, False))
+                == ilistmap.intersect(i, [(0, MAX_T)], 0xFF, j, False))
