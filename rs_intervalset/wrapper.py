@@ -1,11 +1,12 @@
-from typing import List, Tuple
+import heapq
+from typing import List, Tuple, Iterable
 
 from .rs_intervalset import MmapIntervalListMapping
 
 Interval = Tuple[int, int]
 
 
-def _deoverlap(l: List[Interval], fuzz: int) -> List[Interval]:
+def _deoverlap(l: Iterable[Interval], fuzz: int) -> List[Interval]:
     result = []
     for i in l:
         if len(result) == 0:
@@ -36,6 +37,15 @@ class MmapIListToISetMapping(object):
                 i, self._payload_mask, self._payload_value, use_default),
             self._fuzz)
 
+    def sum(self) -> int:
+        total = 0
+        for i in self._ilistmap.get_ids():
+            for a, b in _deoverlap(
+                self._ilistmap.get_intervals(i, 0, 0, False), self._fuzz
+            ):
+                total += max(0, b - a)
+        return total
+
     def is_contained(self, i: int, target: int, use_default: bool) -> bool:
         return self._ilistmap.is_contained(
             i, target, self._payload_mask, self._payload_value, use_default,
@@ -62,12 +72,13 @@ class MmapUnionIlistsToISetMapping(object):
         self._fuzz = fuzz
 
     def get_intervals(self, i: int, use_default: bool) -> List[Interval]:
-        result: List[Interval] = []
+        results = []
         for ilistmap in self._ilistmaps:
-            result.extend(ilistmap.get_intervals(
-                i, self._payload_mask, self._payload_value, use_default))
-        result.sort()
-        return _deoverlap(result, self._fuzz)
+            intervals = ilistmap.get_intervals(
+                i, self._payload_mask, self._payload_value, use_default)
+            if intervals:
+                results.append(intervals)
+        return _deoverlap(heapq.merge(*results), self._fuzz)
 
     def is_contained(self, i: int, target: int, use_default: bool) -> bool:
         for ilistmap in self._ilistmaps:
@@ -80,11 +91,11 @@ class MmapUnionIlistsToISetMapping(object):
 
     def intersect(self, i: int, intervals: List[Interval],
                   use_default: bool) -> List[Interval]:
-        result: List[Interval] = []
+        results = []
         for ilistmap in self._ilistmaps:
             if ilistmap.has_id(i):
-                result.extend(ilistmap.intersect(
-                    i, intervals, self._payload_mask, self._payload_value,
-                    use_default))
-        result.sort()
-        return _deoverlap(result, self._fuzz)
+                results.append(
+                    ilistmap.intersect(
+                        i, intervals, self._payload_mask, self._payload_value,
+                        use_default))
+        return _deoverlap(heapq.merge(*results), self._fuzz)
