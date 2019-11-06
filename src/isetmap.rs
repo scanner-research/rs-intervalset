@@ -285,9 +285,14 @@ impl MmapIntervalSetMapping {
                 let mmap = MmapOptions::new().map(&data_fh);
                 match mmap {
                     Ok(m) => match parse_offsets(&m, 0) {
-                        Some(offsets) => obj.init(|_| MmapIntervalSetMapping {
-                            _impl: _MmapIntervalSetMapping {data: m, offsets: offsets}
-                        }),
+                        Some(offsets) => {
+                            obj.init(
+                                MmapIntervalSetMapping {
+                                    _impl: _MmapIntervalSetMapping {data: m, offsets: offsets}
+                                }
+                            );
+                            Ok(())
+                        },
                         None => Err(exceptions::Exception::py_err("cannot parse offsets"))
                     },
                     Err(s) => Err(exceptions::Exception::py_err(s.to_string()))

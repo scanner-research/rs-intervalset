@@ -296,11 +296,16 @@ impl MmapIntervalListMapping {
                 let mmap = MmapOptions::new().map(&data_fh);
                 match mmap {
                     Ok(m) => match parse_offsets(&m, payload_len) {
-                        Some(offsets) => obj.init(|_| MmapIntervalListMapping {
-                            _impl: _MmapIntervalListMapping {
-                                data: m, offsets: offsets, payload_len: payload_len
-                            }
-                        }),
+                        Some(offsets) => {
+                            obj.init(
+                                MmapIntervalListMapping {
+                                    _impl: _MmapIntervalListMapping {
+                                        data: m, offsets: offsets, payload_len: payload_len
+                                    }
+                                }
+                            );
+                            Ok(())
+                        },
                         None => Err(exceptions::Exception::py_err("cannot parse offsets"))
                     },
                     Err(s) => Err(exceptions::Exception::py_err(s.to_string()))

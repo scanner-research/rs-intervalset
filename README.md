@@ -4,7 +4,10 @@ Python module for fast indexing of immutable memory-mapped intervalsets.
 
 ## Install
 
-First, make sure Rust is installed. Run `rustup override set nightly` inside the directory where the repository is cloned. Next, run `python3 setup.py install --user`.
+First, make sure Rust is installed. Rust nightly build is required for pyo3.
+Run `rustup override set nightly-2019-09-01` inside the directory where the
+repository is cloned (tested with nightly 1.39.0).
+Next, run `python3 setup.py install --user`.
 
 ## Tests
 
@@ -12,7 +15,8 @@ Run `pytest -v tests`.
 
 ## Types
 
-The implementations for the following types are located in `/src` and file writers are available in `rs_intervalset/writer.py`.
+The implementations for the following types are located in `/src` and file
+writers are available in `rs_intervalset/writer.py`.
 
 ### MmapIntervalSetMapping
 

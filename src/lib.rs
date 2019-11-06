@@ -8,12 +8,13 @@ mod common;
 mod isetmap;
 mod ilistmap;
 
-use pyo3::prelude::{Python, PyModule, PyResult, pymodinit};
+use pyo3::prelude::{PyModule, PyResult, pymodule};
+use pyo3::Python;
 use isetmap::MmapIntervalSetMapping;
 use ilistmap::MmapIntervalListMapping;
 
-#[pymodinit]
-fn rs_intervalset(_py: Python, m: &PyModule) -> PyResult<()> {
+#[pymodule]
+fn rs_intervalset(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<MmapIntervalSetMapping>()?;
     m.add_class::<MmapIntervalListMapping>()?;
     Ok(())
