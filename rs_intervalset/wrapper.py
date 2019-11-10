@@ -121,7 +121,7 @@ class MmapUnionIlistsToISetMapping(AbstractMmapISetWrapper):
 
     @property
     def _ids(self) -> List[int]:
-        if self._ids is None:
+        if self.__ids is None:
             ids = set()
             for ilistmap in self._ilistmaps:
                 ids.update(ilistmap.get_ids())
