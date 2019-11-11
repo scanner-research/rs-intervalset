@@ -53,8 +53,14 @@ class AbstractMmapISetWrapper(ABC):
     ) -> List[Interval]:
         raise NotImplementedError()
 
+    def intersect_sum(
+        self, i: int, intervals: List[Interval], use_default: bool
+    ) -> int:
+        return sum(b - a for a, b in self.intersect(i, intervals, use_default))
+
     def sum(self) -> int:
-        raise NotImplementedError()
+        return sum(b - a for i in self.get_ids()
+                   for a, b in self.get_intervals(i, True))
 
 
 class MmapIListToISetMapping(AbstractMmapISetWrapper):
@@ -215,6 +221,16 @@ class MmapISetSubsetMapping(AbstractMmapISetWrapper):
         else:
             raise IndexError('id not found')
 
+    def intersect_sum(
+        self, i: int, intervals: List[Interval], use_default: bool
+    ) -> int:
+        if i in self._subset_ids:
+            return self._isetmap.intersect_sum(i, intervals, use_default)
+        elif use_default:
+            return 0
+        else:
+            raise IndexError('id not found')
+
 
 class MmapISetIntersectionMapping(AbstractMmapISetWrapper):
 
@@ -271,5 +287,18 @@ class MmapISetIntersectionMapping(AbstractMmapISetWrapper):
             return intervals
         elif use_default:
             return []
+        else:
+            raise IndexError('id not found')
+
+    def intersect_sum(self, i: int, intervals: List[Interval],
+                      use_default: bool) -> int:
+        if i in self._ids:
+            for i, isetmap in enumerate(self._isetmaps):
+                if i < len(self._isetmaps) - 1:
+                    intervals = isetmap.intersect(i, intervals, use_default)
+                else:
+                    return isetmap.intersect_sum(i, intervals, use_default)
+        elif use_default:
+            return 0
         else:
             raise IndexError('id not found')

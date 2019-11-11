@@ -203,6 +203,39 @@ impl MmapIntervalSetMapping {
         }
     }
 
+    // Intersect and then sum
+    fn intersect_sum(&self, id: Id, intervals: Vec<Interval>,
+                 use_default: bool) -> PyResult<usize> {
+        match self._impl.offsets.get(&id) {
+            Some((base_offset, length)) => {
+                let mut sum = 0usize;
+                let self_intervals = self._impl.read_intervals(*base_offset, *length);
+                let mut i = 0;
+                let mut j = 0;
+                while i < intervals.len() && j < self_intervals.len() {
+                    let a = intervals[i];
+                    let b = self_intervals[j];
+                    let end = min(a.1, b.1);
+                    let start = max(a.0, b.0);
+                    if end > start {
+                        sum += (end - start) as usize;
+                    }
+                    if a.1 <= b.1 {
+                        i += 1;
+                    } else {
+                        j += 1;
+                    }
+                }
+                Ok(sum)
+            },
+            None => if use_default {
+                Ok(0)
+            } else {
+                Err(exceptions::IndexError::py_err("id not found"))
+            }
+        }
+    }
+
     // Minus this from intervals
     fn minus(&self, id: Id, intervals: Vec<Interval>, use_default: bool) -> PyResult<Vec<Interval>> {
         match self._impl.offsets.get(&id) {
