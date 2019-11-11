@@ -293,11 +293,15 @@ class MmapISetIntersectionMapping(AbstractMmapISetWrapper):
     def intersect_sum(self, i: int, intervals: List[Interval],
                       use_default: bool) -> int:
         if i in self._ids:
-            for i, isetmap in enumerate(self._isetmaps):
-                if i < len(self._isetmaps) - 1:
-                    intervals = isetmap.intersect(i, intervals, use_default)
+            result = 0
+            for j, isetmap in enumerate(self._isetmaps):
+                if j == len(self._isetmaps) - 1:
+                    result = isetmap.intersect_sum(i, intervals, use_default)
                 else:
-                    return isetmap.intersect_sum(i, intervals, use_default)
+                    intervals = isetmap.intersect(i, intervals, use_default)
+                    if len(intervals) == 0:
+                        break
+            return result
         elif use_default:
             return 0
         else:
