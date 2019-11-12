@@ -1,5 +1,5 @@
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::mem;
 use std::io::Cursor;
 use byteorder::{ReadBytesExt, LittleEndian};
@@ -26,9 +26,9 @@ pub fn mmap_read_payload(m: &Mmap, i: usize, n: usize) -> Payload {
     res
 }
 
-pub fn parse_offsets(m: &Mmap, payload_len: usize) -> Option<HashMap<Id, (usize, usize)>> {
+pub fn parse_offsets(m: &Mmap, payload_len: usize) -> Option<BTreeMap<Id, (usize, usize)>> {
     let mut i = 0;
-    let mut id_offsets: HashMap<Id, (usize, usize)> = HashMap::new();
+    let mut id_offsets: BTreeMap<Id, (usize, usize)> = BTreeMap::new();
     while i < m.len() {
         let id = mmap_read_u32(m, i) as Id;
         let n = mmap_read_u32(m, i + mem::size_of::<Id>()) as usize;

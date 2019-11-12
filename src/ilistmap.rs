@@ -7,7 +7,7 @@
 use pyo3::prelude::*;
 use pyo3::exceptions;
 use std::cmp::{max, min};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::mem;
 use std::fs::File;
 use memmap::{MmapOptions, Mmap};
@@ -18,7 +18,7 @@ type IntervalAndPayload = (Value, Value, Payload);
 
 struct _MmapIntervalListMapping {
     data: Mmap,
-    offsets: HashMap<Id, (usize, usize)>,
+    offsets: BTreeMap<Id, (usize, usize)>,
     payload_len: usize
 }
 

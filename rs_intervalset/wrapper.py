@@ -260,7 +260,7 @@ class MmapISetIntersectionMapping(AbstractMmapISetWrapper):
         return all(isetmap.has_id(i) for isetmap in self._isetmaps)
 
     def get_intervals(self, i: int, use_default: bool) -> List[Interval]:
-        if i in self._ids:
+        if use_default or i in self._ids:
             intervals = None
             for isetmap in self._isetmaps:
                 if intervals is None:
@@ -268,8 +268,6 @@ class MmapISetIntersectionMapping(AbstractMmapISetWrapper):
                 else:
                     intervals = isetmap.intersect(i, intervals, use_default)
             return intervals
-        elif use_default:
-            return []
         else:
             raise IndexError('id not found')
 
@@ -279,20 +277,18 @@ class MmapISetIntersectionMapping(AbstractMmapISetWrapper):
 
     def intersect(self, i: int, intervals: List[Interval],
                   use_default: bool) -> List[Interval]:
-        if i in self._ids:
+        if use_default or i in self._ids:
             for isetmap in self._isetmaps:
                 intervals = isetmap.intersect(i, intervals, use_default)
                 if len(intervals) == 0:
                     break
             return intervals
-        elif use_default:
-            return []
         else:
             raise IndexError('id not found')
 
     def intersect_sum(self, i: int, intervals: List[Interval],
                       use_default: bool) -> int:
-        if i in self._ids:
+        if use_default or i in self._ids:
             result = 0
             for j, isetmap in enumerate(self._isetmaps):
                 if j == len(self._isetmaps) - 1:
@@ -302,7 +298,58 @@ class MmapISetIntersectionMapping(AbstractMmapISetWrapper):
                     if len(intervals) == 0:
                         break
             return result
-        elif use_default:
-            return 0
         else:
             raise IndexError('id not found')
+
+
+class MmapISetUnionMapping(AbstractMmapISetWrapper):
+
+    def __init__(self, isetmaps: List[MmapIntervalSetMapping]):
+        self._isetmaps = isetmaps
+        self.__ids: Optional[List[int]] = None
+
+    @property
+    def _ids(self) -> List[int]:
+        if self.__ids is None:
+            ids = None
+            for isetmap in self._isetmaps:
+                if ids is None:
+                    ids = set(isetmap.get_ids())
+                else:
+                    ids.update(isetmap.get_ids())
+            self.__ids = list(sorted(ids))
+        return self.__ids
+
+    def len(self) -> int:
+        return len(self._ids)
+
+    def get_ids(self) -> List[int]:
+        return self._ids
+
+    def has_id(self, i: int) -> bool:
+        return any(isetmap.has_id(i) for isetmap in self._isetmaps)
+
+    def get_intervals(self, i: int, use_default: bool) -> List[Interval]:
+        results = []
+        for isetmap in self._isetmaps:
+            intervals = isetmap.get_intervals(i, True)
+            if intervals:
+                results.append(intervals)
+        if not results and not use_default:
+            raise IndexError('id not found')
+        return _deoverlap(heapq.merge(*results), 0)
+
+    def is_contained(self, i: int, target: int, use_default: bool) -> bool:
+        return any(isetmap.is_contained(i, target, use_default)
+                   for isetmap in self._isetmaps)
+
+    def intersect(self, i: int, intervals: List[Interval],
+                  use_default: bool) -> List[Interval]:
+        results = []
+        for isetmap in self._isetmaps:
+            intervals = isetmap.intersect(i, intervals, use_default)
+            if intervals:
+                results.append(intervals)
+        if not results and not use_default:
+            raise IndexError('id not found')
+        return _deoverlap(heapq.merge(*results), 0)
