@@ -16,14 +16,15 @@ use memmap::{MmapOptions, Mmap};
 use common::*;
 
 struct _MmapIntervalSetMapping {
-    data: Mmap,
+    data: Option<Mmap>,
     offsets: BTreeMap<Id, (usize, usize)>,
 }
 
 impl _MmapIntervalSetMapping {
 
     fn read_interval(&self, i: usize) -> Interval {
-        (mmap_read_u32(&self.data, i), mmap_read_u32(&self.data, i + mem::size_of::<u32>()))
+        let m = &self.data.as_ref().unwrap();
+        (mmap_read_u32(m, i), mmap_read_u32(m, i + mem::size_of::<u32>()))
     }
 
     fn binary_search(&self, base_offset: usize, n: usize, target: Value,
@@ -311,17 +312,31 @@ impl MmapIntervalSetMapping {
             Ok(data_fh) => {
                 let metadata = File::metadata(&data_fh)?;
                 let length = metadata.len() as usize;
+
+                // Empty file case
+                if length == 0 {
+                    obj.init(
+                        MmapIntervalSetMapping {
+                            _impl: _MmapIntervalSetMapping {data: None, offsets: BTreeMap::new()}
+                        }
+                    );
+                    return Ok(());
+                }
+
                 if length % mem::size_of::<u32>() != 0 {
                     return Err(exceptions::Exception::py_err(
                                "file length is not a multiple of 4"))
                 }
+
                 let mmap = MmapOptions::new().map(&data_fh);
                 match mmap {
                     Ok(m) => match parse_offsets(&m, 0) {
                         Some(offsets) => {
                             obj.init(
                                 MmapIntervalSetMapping {
-                                    _impl: _MmapIntervalSetMapping {data: m, offsets: offsets}
+                                    _impl: _MmapIntervalSetMapping {
+                                        data: Some(m), offsets: offsets
+                                    }
                                 }
                             );
                             Ok(())

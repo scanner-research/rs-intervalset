@@ -17,7 +17,7 @@ use common::*;
 type IntervalAndPayload = (Value, Value, Payload);
 
 struct _MmapIntervalListMapping {
-    data: Mmap,
+    data: Option<Mmap>,
     offsets: BTreeMap<Id, (usize, usize)>,
     payload_len: usize
 }
@@ -25,10 +25,11 @@ struct _MmapIntervalListMapping {
 impl _MmapIntervalListMapping {
 
     fn read_interval(&self, i: usize) -> IntervalAndPayload {
+        let m = &self.data.as_ref().unwrap();
         (
-            mmap_read_u32(&self.data, i),
-            mmap_read_u32(&self.data, i + mem::size_of::<u32>()),
-            mmap_read_payload(&self.data, i + 2 * mem::size_of::<u32>(), self.payload_len)
+            mmap_read_u32(m, i),
+            mmap_read_u32(m, i + mem::size_of::<u32>()),
+            mmap_read_payload(m, i + 2 * mem::size_of::<u32>(), self.payload_len)
         )
     }
 
@@ -293,6 +294,21 @@ impl MmapIntervalListMapping {
     unsafe fn __new__(obj: &PyRawObject, data_file: String, payload_len: usize) -> PyResult<()> {
         match File::open(&data_file) {
             Ok(data_fh) => {
+                let metadata = File::metadata(&data_fh)?;
+                let length = metadata.len() as usize;
+
+                // Empty file case
+                if length == 0 {
+                    obj.init(
+                        MmapIntervalListMapping {
+                            _impl: _MmapIntervalListMapping {
+                                data: None, offsets: BTreeMap::new(), payload_len: payload_len
+                            }
+                        }
+                    );
+                    return Ok(());
+                }
+
                 let mmap = MmapOptions::new().map(&data_fh);
                 match mmap {
                     Ok(m) => match parse_offsets(&m, payload_len) {
@@ -300,7 +316,7 @@ impl MmapIntervalListMapping {
                             obj.init(
                                 MmapIntervalListMapping {
                                     _impl: _MmapIntervalListMapping {
-                                        data: m, offsets: offsets, payload_len: payload_len
+                                        data: Some(m), offsets: offsets, payload_len: payload_len
                                     }
                                 }
                             );

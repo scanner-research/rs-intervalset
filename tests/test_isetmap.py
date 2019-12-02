@@ -110,6 +110,7 @@ def test_intersect():
         i = random.choice(list(truth.keys()))
         assert truth[i] == isetmap.intersect(i, [(0, MAX_T)], False)
 
+
 def test_intersect_sum():
     truth = _load_truth()
     isetmap = MmapIntervalSetMapping(DATA_PATH)
@@ -118,6 +119,7 @@ def test_intersect_sum():
         i = random.choice(list(truth.keys()))
         true_sum = sum(b - a for a, b in truth[i])
         assert true_sum == isetmap.intersect_sum(i, [(0, MAX_T)], False)
+
 
 def test_minus():
     truth = _load_truth()
