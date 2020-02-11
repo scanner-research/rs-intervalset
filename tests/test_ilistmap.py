@@ -10,8 +10,8 @@ CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 DATA_PATH = os.path.join(CURRENT_DIR, '.ilistmap.test_data.bin')
 TRUTH_PATH = os.path.join(CURRENT_DIR, '.ilistmap.test_truth.bin')
 
-PAYLOAD_LEN = 1
-DISTINCT_PAYLOADS = 20
+PAYLOAD_LEN = 2
+DISTINCT_PAYLOADS = 512
 N = 1000
 M = 1000
 MAX_T = 100000
@@ -72,9 +72,9 @@ def test_integrity():
         assert ilistmap.has_id(i)
 
         for j in range(DISTINCT_PAYLOADS):
-            true_count = len(_filter(truth[i], 0xFF, j))
-            assert true_count == ilistmap.get_interval_count(i, 0xFF, j)
-            assert true_count == len(ilistmap.get_intervals(i, 0xFF, j, True))
+            true_count = len(_filter(truth[i], 0xFFFF, j))
+            assert true_count == ilistmap.get_interval_count(i, 0xFFFF, j)
+            assert true_count == len(ilistmap.get_intervals(i, 0xFFFF, j, True))
 
         assert len(truth[i]) == ilistmap.get_interval_count(i, 0, 0)
         assert (len(truth[i])
@@ -95,8 +95,8 @@ def test_contains():
 
     for v in range(MAX_T):
         j = random.randint(0, DISTINCT_PAYLOADS - 1)
-        assert truth_contains(v, 0xFF, j) == \
-            ilistmap.is_contained(i, v, 0xFF, j, False, MAX_SPAN), \
+        assert truth_contains(v, 0xFFFF, j) == \
+            ilistmap.is_contained(i, v, 0xFFFF, j, False, MAX_SPAN), \
             'Truth: {}'.format(truth[i])
 
 
@@ -122,8 +122,8 @@ def test_intersect_sum():
         i = random.choice(list(truth.keys()))
         for j in range(DISTINCT_PAYLOADS):
             assert (
-                sum(x[1] - x[0] for x in _filter(truth[i], 0xFF, j))
-                == ilistmap.intersect_sum(i, [(0, MAX_T)], 0xFF, j, False))
+                sum(x[1] - x[0] for x in _filter(truth[i], 0xFFFF, j))
+                == ilistmap.intersect_sum(i, [(0, MAX_T)], 0xFFFF, j, False))
 
 
 def test_intersect():
@@ -133,8 +133,8 @@ def test_intersect():
         i = random.choice(list(truth.keys()))
         for j in range(DISTINCT_PAYLOADS):
             true_iset = _deoverlap(
-                (x[0], x[1]) for x in _filter(truth[i], 0xFF, j)
+                (x[0], x[1]) for x in _filter(truth[i], 0xFFFF, j)
             )
             assert (
                 true_iset
-                == ilistmap.intersect(i, [(0, MAX_T)], 0xFF, j, False))
+                == ilistmap.intersect(i, [(0, MAX_T)], 0xFFFF, j, False))

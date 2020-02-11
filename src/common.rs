@@ -21,7 +21,7 @@ pub fn mmap_read_payload(m: &Mmap, i: usize, n: usize) -> Payload {
     let mut res: Payload = 0;
     let bytes: &[u8] = &m[i..i+n];
     for j in 0..n {
-        res |= (bytes[j] << (8 * j)) as u64;
+        res |= (bytes[j] as u64) << (8 * j);
     }
     res
 }
