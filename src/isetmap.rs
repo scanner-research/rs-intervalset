@@ -149,7 +149,7 @@ impl MmapIntervalSetMapping {
                         while i < *length {
                             let curr_int = self._impl.read_interval(
                                 *base_offset + i * INTERVAL_SIZE);
-                            if min(end, curr_int.1) - max(start, curr_int.0) > 0 {
+                            if min(end, curr_int.1) > max(start, curr_int.0) {
                                 isects = true;
                                 break;
                             }

@@ -98,9 +98,19 @@ def test_has_intersection():
     truth = _load_truth()
     isetmap = MmapIntervalSetMapping(DATA_PATH)
 
+    def has_intersection(intervals, a, b):
+        for x, y in intervals:
+            if min(b, y) - max(a, x) > 0:
+                return True
+        return False
+
     for _ in range(N_REPEAT):
         i = random.choice(list(truth.keys()))
-        assert isetmap.has_intersection(i, 0, MAX_T, False)
+        intervals = isetmap.get_intervals(i, False)
+        for j in range(MAX_T):
+            a = j
+            b = j + 1
+            assert isetmap.has_intersection(i, a, b, False) == has_intersection(intervals, a, b)
 
 
 def test_intersect():
