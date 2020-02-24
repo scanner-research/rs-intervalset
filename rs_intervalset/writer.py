@@ -3,8 +3,9 @@ from typing import List, Tuple, Optional, BinaryIO
 
 class IntervalSetMappingWriter(object):
 
-    def __init__(self, path: str):
-        self._fp: Optional[BinaryIO] = open(path, 'wb')
+    def __init__(self, path: str, append: bool = False):
+        mode = 'ab' if append else 'wb'
+        self._fp: Optional[BinaryIO] = open(path, mode)
         self._path = path
 
     def __enter__(self) -> 'IntervalSetMappingWriter':
@@ -33,8 +34,9 @@ class IntervalSetMappingWriter(object):
 
 class IntervalListMappingWriter(object):
 
-    def __init__(self, path: str, payload_len: int):
-        self._fp: Optional[BinaryIO] = open(path, 'wb')
+    def __init__(self, path: str, payload_len: int, append: bool = False):
+        mode = 'ab' if append else 'wb'
+        self._fp: Optional[BinaryIO] = open(path, mode)
         self._path = path
         self._payload_len = payload_len
 
