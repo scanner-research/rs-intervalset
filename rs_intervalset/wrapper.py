@@ -53,6 +53,11 @@ class AbstractMmapISetWrapper(ABC):
     ) -> List[Interval]:
         raise NotImplementedError()
 
+    def has_intersection(
+        self, i: int, start: int, end: int, use_default: bool
+    ) -> bool:
+        return self.intersect_sum(i, [(start, end)], use_default) > 0
+
     def intersect_sum(
         self, i: int, intervals: List[Interval], use_default: bool
     ) -> int:
