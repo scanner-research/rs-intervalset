@@ -116,6 +116,13 @@ class MmapIListToISetMapping(AbstractMmapISetWrapper):
                 use_default),
             self._fuzz)
 
+    def has_intersection(
+        self, i: int, start: int, end: int, use_default: bool
+    ) -> bool:
+        return 0 < self._ilistmap.intersect_sum(
+            i, [(start, end)], self._payload_mask, self._payload_value,
+            use_default)
+
 
 class MmapUnionIlistsToISetMapping(AbstractMmapISetWrapper):
 
