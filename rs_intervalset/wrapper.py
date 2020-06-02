@@ -36,10 +36,6 @@ class AbstractMmapISetWrapper(ABC):
         raise NotImplementedError()
 
     @abstractmethod
-    def sum(self):
-        raise NotImplementedError()
-
-    @abstractmethod
     def get_intervals(self, i: int, use_default: bool) -> List[Interval]:
         raise NotImplementedError()
 
