@@ -291,7 +291,7 @@ impl MmapIntervalListMapping {
     }
 
     #[new]
-    unsafe fn __new__(obj: &PyRawObject, data_file: String, payload_len: usize) -> PyResult<()> {
+    unsafe fn new(data_file: String, payload_len: usize) -> PyResult<Self> {
         match File::open(&data_file) {
             Ok(data_fh) => {
                 let metadata = File::metadata(&data_fh)?;
@@ -299,28 +299,22 @@ impl MmapIntervalListMapping {
 
                 // Empty file case
                 if length == 0 {
-                    obj.init(
-                        MmapIntervalListMapping {
-                            _impl: _MmapIntervalListMapping {
-                                data: None, offsets: BTreeMap::new(), payload_len: payload_len
-                            }
+                    return Ok(MmapIntervalListMapping {
+                        _impl: _MmapIntervalListMapping {
+                            data: None, offsets: BTreeMap::new(), payload_len: payload_len
                         }
-                    );
-                    return Ok(());
+                    });
                 }
 
                 let mmap = MmapOptions::new().map(&data_fh);
                 match mmap {
                     Ok(m) => match parse_offsets(&m, payload_len) {
                         Some(offsets) => {
-                            obj.init(
-                                MmapIntervalListMapping {
-                                    _impl: _MmapIntervalListMapping {
-                                        data: Some(m), offsets: offsets, payload_len: payload_len
-                                    }
+                            Ok(MmapIntervalListMapping {
+                                _impl: _MmapIntervalListMapping {
+                                    data: Some(m), offsets: offsets, payload_len: payload_len
                                 }
-                            );
-                            Ok(())
+                            })
                         },
                         None => Err(exceptions::Exception::py_err("cannot parse offsets"))
                     },

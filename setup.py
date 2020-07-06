@@ -20,7 +20,7 @@ tests_require = install_requires + ['pytest>=4.2.1']
 
 setup(
     name='rs-intervalset',
-    version='0.1.0',
+    version='0.2.0',
     classifiers=[],
     packages=['rs_intervalset'],
     rust_extensions=[RustExtension('rs_intervalset.rs_intervalset', 'Cargo.toml')],

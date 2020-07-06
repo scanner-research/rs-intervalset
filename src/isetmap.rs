@@ -307,7 +307,7 @@ impl MmapIntervalSetMapping {
     }
 
     #[new]
-    unsafe fn __new__(obj: &PyRawObject, data_file: String) -> PyResult<()> {
+    unsafe fn new(data_file: String) -> PyResult<Self> {
         match File::open(&data_file) {
             Ok(data_fh) => {
                 let metadata = File::metadata(&data_fh)?;
@@ -315,12 +315,9 @@ impl MmapIntervalSetMapping {
 
                 // Empty file case
                 if length == 0 {
-                    obj.init(
-                        MmapIntervalSetMapping {
-                            _impl: _MmapIntervalSetMapping {data: None, offsets: BTreeMap::new()}
-                        }
-                    );
-                    return Ok(());
+                    return Ok(MmapIntervalSetMapping {
+                        _impl: _MmapIntervalSetMapping {data: None, offsets: BTreeMap::new()}
+                    });
                 }
 
                 if length % mem::size_of::<u32>() != 0 {
@@ -332,14 +329,11 @@ impl MmapIntervalSetMapping {
                 match mmap {
                     Ok(m) => match parse_offsets(&m, 0) {
                         Some(offsets) => {
-                            obj.init(
-                                MmapIntervalSetMapping {
-                                    _impl: _MmapIntervalSetMapping {
-                                        data: Some(m), offsets: offsets
-                                    }
+                            Ok(MmapIntervalSetMapping {
+                                _impl: _MmapIntervalSetMapping {
+                                    data: Some(m), offsets: offsets
                                 }
-                            );
-                            Ok(())
+                            })
                         },
                         None => Err(exceptions::Exception::py_err("cannot parse offsets"))
                     },

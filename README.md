@@ -4,10 +4,8 @@ Python module for fast indexing of immutable memory-mapped intervalsets.
 
 ## Install
 
-First, make sure Rust is installed. Rust nightly build is required for pyo3.
-Run `rustup override set nightly-2020-06-01` inside the directory where the
-repository is cloned (tested with nightly 1.45.0).
-Next, run `python3 setup.py install --user`.
+First, make sure Rust is installed (tested on stable 1.43.0). Next, run `python3
+setup.py install --user`.
 
 ## Tests
 

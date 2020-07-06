@@ -1,5 +1,3 @@
-#![feature(specialization)]
-
 extern crate pyo3;
 extern crate memmap;
 extern crate byteorder;
